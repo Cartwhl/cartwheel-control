@@ -1,0 +1,38 @@
+[project]
+name = "cartwheel-control"
+version = "0.1.0"
+description = "Whole-body motion-tracking policies for humanoid robots, in simulation"
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.12"
+dependencies = [
+    "huggingface-hub>=0.36.0",
+    "mjlab>=1.6.0",
+    "safetensors>=0.6.2",
+    "torch>=2.14.1",
+    "tyro>=1.0.16",
+    "warp-lang>=1.18.0",
+]
+
+[project.scripts]
+cartwheel-play = "cartwheel_control.play:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["cartwheel_control"]
+
+[tool.uv]
+required-version = ">=0.6"
+
+# Linux x86-64 gets CUDA 12 builds of torch and warp (they run on drivers >= 525).
+[[tool.uv.index]]
+name = "pytorch-cu126"
+url = "https://download.pytorch.org/whl/cu126"
+explicit = true
+
+[tool.uv.sources]
+torch = [{ index = "pytorch-cu126", marker = "sys_platform == 'linux' and platform_machine == 'x86_64'" }]
+warp-lang = [{ url = "https://github.com/NVIDIA/warp/releases/download/v1.18.0/warp_lang-1.18.0+cu12-py3-none-manylinux_2_28_x86_64.whl", marker = "sys_platform == 'linux' and platform_machine == 'x86_64'" }]
