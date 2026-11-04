@@ -113,4 +113,21 @@ ASIMOV = Robot(
   locked_joints=("neck_yaw_joint", "neck_pitch_joint"),
 )
 
-ROBOTS = {r.name: r for r in (RP1, ASIMOV)}
+# ---------------------------------------------------------------- Unitree G1 (stock rubber hands)
+# mjlab's G1 actuators follow the RP1 rule (10 Hz, damping ratio 2) with the armature and effort
+# limit per joint, which g1.xml carries, so the RP1 gain function applies unchanged.
+G1 = Robot(
+  name="g1",
+  title="Unitree G1",
+  mjcf="model/g1.xml",
+  default_joint_pos=(
+    -0.312, 0, 0, 0.669, -0.363, 0,  -0.312, 0, 0, 0.669, -0.363, 0,  0, 0, 0,
+    0.2, 0.2, 0, 0.6, 0, 0, 0,  0.2, -0.2, 0, 0.6, 0, 0, 0,
+  ),  # fmt: skip
+  standing_height=0.76,
+  # the rubber palms and fingers make contact like the feet, so they get the same friction
+  foot_geoms=r"^(left|right)_(foot[1-7]|palm|fingers)_collision$",
+  joints=_rp1_joints,
+)
+
+ROBOTS = {r.name: r for r in (RP1, ASIMOV, G1)}

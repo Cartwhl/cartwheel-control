@@ -4,13 +4,14 @@
 <a href="https://huggingface.co/andrew-cartwheel/cartwheel-control/resolve/main/assets/cartwheel-control.mp4"><img src="assets/hero.jpg" alt="RP1 and Asimov-1 tracking motions in simulation" width="100%"></a>
 
 Whole-body motion-tracking policies for humanoid robots. Give a policy a reference motion and it
-drives the robot's joints to perform it, in physics simulation. Policies are released for two
+drives the robot's joints to perform it, in physics simulation. Policies are released for three
 robots:
 
 | Robot | Joints | Weights |
 |---|---|---|
 | RoboParty RP1 | 28 | [`rp1/`](https://huggingface.co/andrew-cartwheel/cartwheel-control/tree/main/rp1) |
 | Menlo Asimov-1 | 25 | [`asimov-1/`](https://huggingface.co/andrew-cartwheel/cartwheel-control/tree/main/asimov-1) |
+| Unitree G1 | 29 | [`g1/`](https://huggingface.co/andrew-cartwheel/cartwheel-control/tree/main/g1) |
 
 ## Run
 
@@ -30,7 +31,7 @@ motion as a translucent ghost.
 
 | Option | |
 |---|---|
-| `--robot rp1` / `--robot asimov-1` | which policy |
+| `--robot rp1` / `asimov-1` / `g1` | which policy |
 | `--clips dance` | only motions whose name matches this regex |
 | `--motions <folder>` | your own motions instead of the examples |
 | `--max-seconds 20` | how much of each motion to run |
