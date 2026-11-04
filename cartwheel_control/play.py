@@ -27,7 +27,7 @@ HF_REPO = "andrew-cartwheel/cartwheel-control"
 
 @dataclass
 class Args:
-  robot: str = "rp1"  # rp1 or asimov-1
+  robot: str = "rp1"  # rp1, asimov-1 or g1
   motions: str | None = None  # folder of .npz motions (motion.py); default: the examples in the repo
   clips: str = "."  # regex over motion names
   max_clips: int = 32
