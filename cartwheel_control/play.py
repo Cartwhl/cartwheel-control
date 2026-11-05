@@ -15,6 +15,7 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass
 
+import mujoco
 import numpy as np
 import torch
 import tyro
@@ -23,6 +24,7 @@ from cartwheel_control import motion, policy, viewer
 from cartwheel_control.robots import ROBOTS
 
 HF_REPO = "andrew-cartwheel/cartwheel-control"
+HF_REVISION = "24fc279af8f70097f503767b81db5384d779aae5"
 
 
 @dataclass
@@ -43,7 +45,7 @@ def fetch(weights: str, robot: str) -> str:
   if not os.path.isdir(weights):
     from huggingface_hub import snapshot_download
 
-    weights = snapshot_download(weights, allow_patterns=[f"{robot}/*"])
+    weights = snapshot_download(weights, revision=HF_REVISION if weights == HF_REPO else None, allow_patterns=[f"{robot}/*"])
   folder = os.path.join(weights, robot)
   assert os.path.isfile(os.path.join(folder, "config.json")), f"no {robot}/config.json in {weights}"
   return folder
@@ -87,6 +89,22 @@ def rollout(pi, inputs: policy.Inputs, sim, motions: motion.Motions, hist: int, 
   }
 
 
+def mpjpe(m: mujoco.MjModel, R: dict[str, np.ndarray]) -> np.ndarray:
+  """Per motion, the mean body position error (mm) relative to the root, up to a fall."""
+  d = mujoco.MjData(m)
+
+  def rel(q):
+    d.qpos[:] = q
+    mujoco.mj_kinematics(m, d)
+    return d.xpos[2:] - d.xpos[1]
+
+  out = []
+  for rob, ref, f, k, n in zip(R["robot"], R["ref"], R["failed"], R["fail_step"], R["frames"]):
+    live = int(k) if f else int(n)
+    out.append(1000 * np.mean([np.linalg.norm(rel(rob[t]) - rel(ref[t]), axis=-1).mean() for t in range(max(live, 1))]))
+  return np.array(out)
+
+
 def main():
   a = tyro.cli(Args)
   assert a.robot in ROBOTS, f"--robot is one of {', '.join(ROBOTS)}"
@@ -102,11 +120,12 @@ def main():
   assert sim.joint_names == cfg["joints"], "the policy's joint order differs from the robot model's"
   inputs = policy.Inputs(motions, robot.default_joint_pos, cfg["goal_frames"])
   R = rollout(pi, inputs, sim, motions, cfg["hist"], a.max_seconds)
+  R["mpjpe_mm"] = mpjpe(robot.model(folder), R)
   os.makedirs(a.out, exist_ok=True)
   npz = os.path.join(a.out, "rollouts.npz")
   np.savez_compressed(npz, **R)
-  for name, f, k in zip(R["names"], R["failed"], R["fail_step"]):
-    print(f"{'fell at %5.1f s' % (k / motion.FPS) if f else 'completed      '}  {name}")
+  for name, f, k, e in zip(R["names"], R["failed"], R["fail_step"], R["mpjpe_mm"]):
+    print(f"{'fell at %5.1f s' % (k / motion.FPS) if f else 'completed      '}  {e:6.1f} mm MPJPE  {name}")
   print(f"{int(R['failed'].sum())} of {len(files)} fell; rollouts in {npz}")
   if a.viewer:
     out = os.path.join(a.out, "viewer")
