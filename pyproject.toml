@@ -9,7 +9,7 @@ dependencies = [
     "huggingface-hub>=0.36.0",
     "mjlab>=1.6.0",
     "safetensors>=0.6.2",
-    "torch>=2.14.1",
+    "torch>=2.11",
     "tyro>=1.0.16",
     "warp-lang>=1.18.0",
 ]
@@ -27,12 +27,12 @@ packages = ["cartwheel_control"]
 [tool.uv]
 required-version = ">=0.6"
 
-# Linux x86-64 gets CUDA 12 builds of torch and warp (they run on drivers >= 525).
+# Linux x86-64 gets CUDA 12 builds of torch and warp (they run on drivers >= 570).
 [[tool.uv.index]]
-name = "pytorch-cu126"
-url = "https://download.pytorch.org/whl/cu126"
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
 explicit = true
 
 [tool.uv.sources]
-torch = [{ index = "pytorch-cu126", marker = "sys_platform == 'linux' and platform_machine == 'x86_64'" }]
+torch = [{ index = "pytorch-cu128", marker = "sys_platform == 'linux' and platform_machine == 'x86_64'" }]
 warp-lang = [{ url = "https://github.com/NVIDIA/warp/releases/download/v1.18.0/warp_lang-1.18.0+cu12-py3-none-manylinux_2_28_x86_64.whl", marker = "sys_platform == 'linux' and platform_machine == 'x86_64'" }]

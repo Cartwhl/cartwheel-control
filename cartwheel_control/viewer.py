@@ -59,6 +59,7 @@ def write(out: str, robot: Robot, folder: str, R: dict[str, np.ndarray], fps: fl
         "frames": len(sel),
         "seconds": round(n / 50, 2),
         "fell_at": round(int(R["fail_step"][c]) / 50, 2) if failed else None,
+        "mpjpe_mm": round(float(R["mpjpe_mm"][c]), 1),
         "root_err_cm": [round(100 * float(root_err.mean()), 1), round(100 * float(root_err.max()), 1)],
       }
     )

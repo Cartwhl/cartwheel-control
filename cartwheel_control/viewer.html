@@ -3,6 +3,9 @@
 <title>Cartwheel Control</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<script>
+try { const t = localStorage.getItem("theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch (e) {}
+</script>
 <style>
 /* Motion list on the left, 3D stage on the right, transport under the stage; on phones the
    list drops below the stage. */
@@ -46,6 +49,7 @@ header { grid-column: 1 / -1; display: flex; align-items: baseline; gap: 16px; f
 h1 { font-size: 17px; font-weight: 600; margin: 0; letter-spacing: 0.01em; }
 .legend { display: flex; gap: 14px; color: var(--muted); font-size: 12.5px; flex-wrap: wrap; }
 .legend span { display: inline-flex; align-items: center; gap: 6px; }
+#theme { margin-left: auto; }
 .sw { width: 10px; height: 10px; border-radius: 2px; display: inline-block; box-shadow: inset 0 0 0 1px var(--line); }
 .sw.ref { background: var(--source); opacity: 0.6; box-shadow: none; }
 
@@ -102,6 +106,7 @@ button.ctl[aria-pressed="true"] { border-color: var(--accent); color: var(--acce
       <span><i class="sw ref"></i>Reference motion</span>
       <span id="meta"></span>
     </div>
+    <button class="ctl" id="theme" type="button" title="Theme: follow the system, light or dark"></button>
   </header>
 
   <aside class="rail">
@@ -216,7 +221,7 @@ world.add(floor);
 let grid;
 function themeScene() {
   scene.background = new THREE.Color(css("--stage"));
-  if (grid) world.remove(grid);
+  if (grid) { world.remove(grid); grid.geometry.dispose(); grid.material.dispose(); }
   grid = new THREE.GridHelper(400, 400, css("--grid"), css("--grid"));
   grid.rotation.x = Math.PI / 2;
   grid.material.transparent = true;
@@ -266,6 +271,7 @@ function buildRobot(ghost) {
     depth.scale.copy(m.scale);
     depth.renderOrder = 1;
     m.parent.add(depth);
+    if (!m.geometry.attributes.normal) m.geometry.computeVertexNormals();
     m.material = matGhost;
     m.renderOrder = 2;
   }
@@ -277,6 +283,17 @@ const ghost = buildRobot(true);
 themeScene();
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change", themeScene);
 new MutationObserver(themeScene).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+const themeBtn = document.getElementById("theme");
+const themes = [["auto", "◐ auto"], ["light", "☀ light"], ["dark", "☾ dark"]];
+let theme = document.documentElement.dataset.theme ?? "auto";
+themeBtn.textContent = themes.find(([k]) => k === theme)[1];
+themeBtn.addEventListener("click", () => {
+  theme = themes[(themes.findIndex(([k]) => k === theme) + 1) % 3][0];
+  themeBtn.textContent = themes.find(([k]) => k === theme)[1];
+  if (theme === "auto") delete document.documentElement.dataset.theme;
+  else document.documentElement.dataset.theme = theme;
+  try { localStorage.setItem("theme", theme); } catch (e) {}
+});
 document.getElementById("loading").hidden = true;
 window.viewerReady = true;
 
@@ -338,6 +355,7 @@ manifest.clips.forEach((c, i) => {
 function renderStats(c) {
   const rows = [
     ["Outcome", c.fell_at === null ? "completed" : `fell at ${c.fell_at.toFixed(1)} s`],
+    ["MPJPE", `${c.mpjpe_mm.toFixed(0)} mm`],
     ["Root position error, mean", `${c.root_err_cm[0].toFixed(1)} cm`],
     ["Root position error, max", `${c.root_err_cm[1].toFixed(1)} cm`],
     ["Length shown", `${c.seconds.toFixed(1)} s`],
